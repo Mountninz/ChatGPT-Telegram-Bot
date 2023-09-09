@@ -3,6 +3,7 @@ Using simple Python code to get a functional Telegram Chat bot linked to the Ope
 The script has been modified so the bot can be asked questions by mgroup members directly by using the @TelegramBotUsername in Telegram.
 
 Firstly copy the script from the "TelegramBotCode" file in the repository.
+
 Replace the following three lines of code with your own Telegram Bot Token, OpenAI API key and @BotUsername
 
 # Telegram Bot Token
