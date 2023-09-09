@@ -1,0 +1,82 @@
+import logging
+import telegram
+from telegram import Update
+from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext
+import openai
+
+# Telegram Bot Token
+TELEGRAM_BOT_TOKEN = "ENTER API KEY HERE"
+
+# OpenAI API Key
+OPENAI_API_KEY = 'ENTER API KEY HERE'
+
+# Bot Username
+BOT_USERNAME = "@BOTUSERNAMEHERE"  # Replace with your bot's username
+
+# Initialize Telegram Bot
+bot = telegram.Bot(token=TELEGRAM_BOT_TOKEN)
+
+# Initialize OpenAI API client
+import openai
+openai.api_key = OPENAI_API_KEY
+
+# Define a dictionary to store conversation history for each chat
+conversation_history = {}
+
+# Define a function to handle incoming messages
+def handle_message(update, context):
+    chat_id = update.message.chat_id
+    user_message = update.message.text
+
+    # Check if the bot's username is mentioned in the message text
+    if BOT_USERNAME in user_message:
+        # Retrieve conversation history for this chat
+        if chat_id in conversation_history:
+            conversation = conversation_history[chat_id]
+        else:
+            conversation = []
+
+        # Add the user's message to the conversation
+        conversation.append({"role": "system", "content": "user"})
+        conversation.append({"role": "user", "content": user_message})
+
+        # Process the conversation with OpenAI's GPT-3
+        try:
+            response = openai.ChatCompletion.create(
+                model="gpt-3.5-turbo",
+                messages=conversation,
+            )
+
+            bot_response = response.choices[0].message["content"]
+
+            # Send the bot's response back to the chat
+            bot.send_message(chat_id=chat_id, text=bot_response)
+
+        except Exception as e:
+            bot_response = "Sorry, I encountered an error."
+
+        # Update the conversation history
+        conversation_history[chat_id] = conversation
+
+# Define a function to handle the /start command
+def start(update, context):
+    user_id = update.message.from_user.id
+    context.bot.send_message(chat_id=user_id, text="Welcome to the bot! How can I assist you?")
+
+# Main function to run the bot
+def main():
+    updater = Updater(token=TELEGRAM_BOT_TOKEN, use_context=True)
+    dp = updater.dispatcher
+
+    # Add command handlers
+    dp.add_handler(CommandHandler("start", start))
+
+    # Handle incoming messages with the handle_message function
+    dp.add_handler(MessageHandler(Filters.text & ~Filters.command, handle_message))
+
+    # Start the bot
+    updater.start_polling()
+    updater.idle()
+
+if __name__ == "__main__":
+    main()
